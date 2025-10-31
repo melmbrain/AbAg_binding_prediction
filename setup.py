@@ -20,7 +20,7 @@ setup(
     description="Production-ready antibody-antigen binding affinity prediction using deep learning",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/AbAg_binding_prediction",
+    url="https://github.com/melmbrain/AbAg_binding_prediction",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -61,8 +61,8 @@ setup(
     },
     keywords="antibody antigen binding affinity deep-learning bioinformatics",
     project_urls={
-        "Documentation": "https://github.com/yourusername/AbAg_binding_prediction",
-        "Source": "https://github.com/yourusername/AbAg_binding_prediction",
-        "Bug Reports": "https://github.com/yourusername/AbAg_binding_prediction/issues",
+        "Documentation": "https://github.com/melmbrain/AbAg_binding_prediction",
+        "Source": "https://github.com/melmbrain/AbAg_binding_prediction",
+        "Bug Reports": "https://github.com/melmbrain/AbAg_binding_prediction/issues",
     },
 )

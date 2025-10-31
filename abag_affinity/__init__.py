@@ -14,8 +14,8 @@ Example:
 """
 
 __version__ = "1.0.0"
-__author__ = "Your Name"
-__email__ = "your.email@example.com"
+__author__ = "melmbrain"
+__email__ = "josh223@naver.com"
 
 from .predictor import AffinityPredictor
 
