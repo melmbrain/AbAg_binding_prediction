@@ -1,0 +1,15 @@
+{
+  "model": "Phase 2 - AgAb Real Data",
+  "n_samples": {
+    "train": 4910,
+    "val": 1052,
+    "test": 1053
+  },
+  "test_metrics": {
+    "spearman": 0.8500939943915532,
+    "pearson": 0.946108473589198,
+    "r2": 0.8779193655213609,
+    "rmse": 1.320179942553363
+  },
+  "training_time_minutes": 0.4086991747220357
+}

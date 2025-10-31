@@ -1,0 +1,19 @@
+# Include documentation
+include README.md
+include LICENSE
+include requirements.txt
+
+# Include model files
+recursive-include models *.pth *.json
+
+# Include examples
+recursive-include examples *.py
+
+# Include tests
+recursive-include tests *.py
+
+# Exclude unnecessary files
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude .git*
