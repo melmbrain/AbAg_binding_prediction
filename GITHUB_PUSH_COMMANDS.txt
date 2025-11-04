@@ -1,0 +1,181 @@
+================================================================================
+QUICK REFERENCE - GitHub Push Commands
+================================================================================
+
+📋 PRE-PUSH CHECKS
+================================================================================
+
+# 1. Check git status (what will be committed)
+git status
+
+# 2. Verify no large files
+find . -type f -size +10M ! -path "*/.git/*" ! -path "*/external_data/*" ! -path "*/archive/*"
+
+# 3. Check what's being tracked (should respect .gitignore)
+git ls-files | head -20
+
+# 4. Verify .gitignore is working
+git check-ignore external_data/*.csv
+
+================================================================================
+
+🚀 PUSH TO GITHUB (3 STEPS)
+================================================================================
+
+STEP 1: Stage All Files
+------------------------
+git add .
+git status  # Verify what's staged
+
+
+STEP 2: Commit
+--------------
+git commit -m "Clean up repository for GitHub distribution
+
+- Reorganize documentation structure  
+- Add LICENSE (MIT) and CONTRIBUTING.md
+- Update README with comprehensive guide
+- Move old versions to archive
+- Organize scripts and examples
+- Add .gitignore for large files
+- Prepare for v2.0 release"
+
+
+STEP 3: Push to GitHub
+----------------------
+# First time (replace YOUR_USERNAME):
+git remote add origin https://github.com/YOUR_USERNAME/AbAg_binding_prediction.git
+git push -u origin main
+
+# Or if branch is 'master':
+git push -u origin master
+
+# Subsequent pushes:
+git push
+
+================================================================================
+
+📝 BEFORE FIRST PUSH - Update These
+================================================================================
+
+In README.md, replace:
+- yourusername → Your GitHub username
+- your.email@example.com → Your email  
+- @yourhandle → Your Twitter (optional)
+
+================================================================================
+
+🔧 USEFUL GIT COMMANDS
+================================================================================
+
+# Unstage files if needed
+git reset
+
+# Unstage specific file
+git reset filename
+
+# See what changed
+git diff
+
+# Undo last commit (keep changes)
+git reset --soft HEAD~1
+
+# Check remote URL
+git remote -v
+
+# View commit history
+git log --oneline -10
+
+================================================================================
+
+✅ POST-PUSH CHECKLIST
+================================================================================
+
+On GitHub website:
+1. [ ] Add repository description and topics
+2. [ ] Enable Issues and Wiki (optional)
+3. [ ] Create release v2.0.0
+4. [ ] Add topics: machine-learning, antibody, drug-discovery, pytorch
+5. [ ] Test that README displays correctly
+6. [ ] Verify no large files were pushed
+
+================================================================================
+
+📦 REPOSITORY INFO
+================================================================================
+
+Name:        AbAg_binding_prediction
+Description: Deep learning model for predicting antibody-antigen binding affinity
+Topics:      machine-learning, deep-learning, antibody, drug-discovery, pytorch,
+             computational-biology, protein-binding, affinity-prediction
+
+================================================================================
+
+🎯 NEXT STEPS AFTER PUSH
+================================================================================
+
+1. Test fresh clone works:
+   git clone https://github.com/YOUR_USERNAME/AbAg_binding_prediction.git
+   cd AbAg_binding_prediction
+   pip install -e .
+   pytest tests/
+
+2. Add training results when complete:
+   - Update README with v2 performance
+   - Upload best_model_v2.pth (if <100 MB)
+   - Create GitHub release
+
+3. Share your work:
+   - Twitter/LinkedIn
+   - Reddit (r/MachineLearning, r/bioinformatics)
+   - Email to collaborators
+
+================================================================================
+
+❓ TROUBLESHOOTING
+================================================================================
+
+"Large files detected":
+- Check .gitignore is working
+- Remove from staging: git reset filename
+- Add to .gitignore
+
+"Nothing to commit":
+- Files already committed
+- Check: git status
+
+"Remote already exists":
+- Already set up
+- Just run: git push
+
+"Authentication failed":
+- Set up SSH key or Personal Access Token
+- See: https://docs.github.com/en/authentication
+
+================================================================================
+
+📞 QUICK HELP
+================================================================================
+
+View status:         git status
+View what changed:   git diff  
+Unstage all:         git reset
+See commit history:  git log --oneline
+Check .gitignore:    git check-ignore filename
+
+================================================================================
+
+🎉 YOU'RE READY!
+================================================================================
+
+Current status: ✅ Repository cleaned and organized
+Ready to push: ✅ Yes
+Waiting on:    Training to complete (check Colab)
+
+Next command:  git add .
+Then:          git commit -m "Clean up repository for GitHub distribution"
+Finally:       git push -u origin main
+
+Good luck! 🚀
+
+================================================================================

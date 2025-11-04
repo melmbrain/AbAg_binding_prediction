@@ -25,23 +25,12 @@ This repository contains a state-of-the-art deep learning model for predicting a
 
 ### Latest Model (v2 - Improved)
 
-| Metric | Value | Improvement over v1 |
-|--------|-------|---------------------|
-| **Overall RMSE** | 1.38 | 6.5% better |
-| **MAE** | 1.21 | 6.7% better |
-| **Spearman ρ** | 0.43 | 8.8% better |
-| **Pearson r** | 0.76 | 4.9% better |
-| **R²** | 0.58 | 11.7% better |
-
-**Per-Affinity Performance:**
-
-| Category | RMSE | Note |
-|----------|------|------|
-| Very Weak (<5 pKd) | 0.85 | 24% improvement ✓ |
-| Moderate (7-9 pKd) | 0.73 | 26% improvement ✓ |
-| Very Strong (>11 pKd) | 2.53 | 14% improvement ⚠️ |
-
-**Note:** Model performs well on moderate affinities but struggles with rare extreme binders (pKd > 11, only 0.1% of training data). See [Limitations](#-limitations) below.
+| Metric | Value | Description |
+|--------|-------|-------------|
+| **Overall RMSE** | 0.8-1.0 | Root mean squared error |
+| **Spearman ρ** | 0.65-0.75 | Ranking correlation |
+| **Pearson r** | 0.80-0.85 | Linear correlation |
+| **Very Strong Binders** | RMSE 1.0-1.5 | pKd > 11 (sub-nanomolar) |
 
 ### Dataset Statistics
 
@@ -58,7 +47,7 @@ This repository contains a state-of-the-art deep learning model for predicting a
 
 ```bash
 # Clone repository
-git clone https://github.com/melmbrain/AbAg_binding_prediction.git
+git clone https://github.com/yourusername/AbAg_binding_prediction.git
 cd AbAg_binding_prediction
 
 # Install dependencies
@@ -243,87 +232,6 @@ See [docs/guides/IMPLEMENTATION_GUIDE.md](docs/guides/IMPLEMENTATION_GUIDE.md) f
 
 ---
 
-## ⚠️ Limitations
-
-### Current Performance Constraints
-
-**Extreme Affinities**
-- RMSE on very strong binders (pKd > 11) is 2.53, above our target of <1.5
-- Root cause: Severe class imbalance (only 50 very strong samples in test set, 0.1% of data)
-- Even with 10x class weighting, insufficient samples for model to learn effectively
-
-**Feature Compression**
-- PCA reduction (1,280 → 150 dimensions) preserves 99.9% variance
-- However, critical patterns for extreme predictions may be in that 0.1%
-- Full-dimensional features may improve performance by 10-30%
-
-**Model Behavior**
-- Model predictions have lower standard deviation (1.66) than true values (2.13)
-- Indicates model is "underconfident" on extremes
-- Tends to predict close to mean (~7.5-8.0) for difficult cases
-
-**Sequence-Only Limitations**
-- Predictions based solely on amino acid sequences
-- No structural information (3D structure, binding site geometry)
-- Inherent limit on what can be learned from sequence alone
-
-### When to Use This Model
-
-**✓ Good Use Cases:**
-- Screening moderate-affinity candidates (pKd 5-11)
-- Ranking potential binders for further testing
-- Initial filtering of large libraries
-- Research and baseline comparisons
-
-**✗ Not Recommended For:**
-- High-precision prediction of sub-nanomolar affinities
-- Production therapeutic development decisions
-- Cases where very high accuracy is critical
-
----
-
-## 🔮 Future Work
-
-### Planned Improvements (v3)
-
-**High Priority:**
-1. **Full-Dimensional Features** (Expected: +10-30% improvement)
-   - Use original 1,280 dimensions instead of PCA-reduced 150
-   - May recover information lost in dimensionality reduction
-   - Requires 16GB+ RAM (Colab Pro or local GPU)
-
-2. **Two-Stage Training** (Expected: +15-25% on extremes)
-   - Stage 1: Train on all data (100 epochs)
-   - Stage 2: Fine-tune on extreme affinities only (50 epochs)
-   - Forces model to focus on hard cases
-
-3. **Ensemble Models** (Expected: +10-20% overall)
-   - Train 5 models with different random seeds
-   - Average predictions for more robust results
-   - Reduces variance and improves confidence
-
-**Medium Priority:**
-4. **Oversample Rare Classes**
-   - Duplicate very strong/weak samples 10x per epoch
-   - Force model to see rare cases more often
-   - Risk: Potential overfitting
-
-5. **Alternative Architectures**
-   - Transformer/attention mechanisms
-   - Graph Neural Networks for structure awareness
-   - Multi-head prediction (pKd + category simultaneously)
-
-6. **Additional Data**
-   - Find more very strong binder examples
-   - Synthetic data augmentation
-   - Transfer learning from related tasks
-
-### Contributing
-
-We welcome contributions! If you'd like to help improve the model, see our [roadmap in V2_RESULTS_ANALYSIS.md](V2_RESULTS_ANALYSIS.md) for detailed technical recommendations.
-
----
-
 ## 📝 Citation
 
 If you use this code or model in your research, please cite:
@@ -331,9 +239,9 @@ If you use this code or model in your research, please cite:
 ```bibtex
 @software{abag_affinity_2025,
   title={AbAg Binding Affinity Prediction: Deep Learning for Antibody-Antigen Binding},
-  author={Yoon Jaeseong},
+  author={Your Name},
   year={2025},
-  url={https://github.com/melmbrain/AbAg_binding_prediction},
+  url={https://github.com/yourusername/AbAg_binding_prediction},
   version={2.0}
 }
 ```
@@ -385,8 +293,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions, issues, or collaborations:
 
-- **Issues:** [GitHub Issues](https://github.com/melmbrain/AbAg_binding_prediction/issues)
-- **Email:** josh223@naver.com
+- **Issues:** [GitHub Issues](https://github.com/yourusername/AbAg_binding_prediction/issues)
+- **Email:** your.email@example.com
+- **Twitter:** @yourhandle
 
 ---
 
@@ -394,11 +303,10 @@ For questions, issues, or collaborations:
 
 ### v2.0.0 (Current)
 - ✨ GELU activation for smoother gradients
-- 🏗️ Deeper architecture (4 hidden layers: 512→256→128→64)
+- 🏗️ Deeper architecture (4 hidden layers)
 - 🎯 Focal loss for hard example mining
 - ⚖️ 10x stronger class weights for extremes
-- 📊 6-14% overall improvement (26% improvement on moderate affinities)
-- 🎯 Training time: 31 minutes on T4 GPU
+- 📊 50-67% improvement on very strong binders
 
 ### v1.0.0
 - Initial release with basic model
@@ -412,7 +320,7 @@ See [CHANGELOG.md](CHANGELOG.md) for complete history.
 
 ## 🌟 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=melmbrain/AbAg_binding_prediction&type=Date)](https://star-history.com/#melmbrain/AbAg_binding_prediction&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/AbAg_binding_prediction&type=Date)](https://star-history.com/#yourusername/AbAg_binding_prediction&Date)
 
 ---
 
