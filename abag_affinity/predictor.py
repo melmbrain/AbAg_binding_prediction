@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class MultiHeadAttentionModel(nn.Module):
     """Multi-head attention model for binding affinity prediction"""
 
-    def __init__(self, input_dim=300, hidden_dim=256, n_heads=8, dropout=0.1):
+    def __init__(self, input_dim=300, hidden_dim=256, n_heads=6, dropout=0.1):
         super().__init__()
         self.attention = nn.MultiheadAttention(
             embed_dim=input_dim,
@@ -115,7 +115,7 @@ class AffinityPredictor:
 
     def _load_model(self) -> nn.Module:
         """Load the trained model"""
-        model = MultiHeadAttentionModel(input_dim=300, hidden_dim=256, n_heads=8)
+        model = MultiHeadAttentionModel(input_dim=300, hidden_dim=256, n_heads=6)
         checkpoint = torch.load(self.model_path, map_location=self.device)
 
         if 'model_state_dict' in checkpoint:
