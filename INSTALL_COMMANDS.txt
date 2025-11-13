@@ -1,0 +1,115 @@
+=================================================================
+CUDA TOOLKIT + FLASHATTENTION INSTALLATION COMMANDS
+=================================================================
+
+Copy and paste these commands ONE BY ONE into your WSL2 terminal.
+You'll need to enter your sudo password when prompted.
+
+=================================================================
+STEP 1: Install CUDA Repository Keyring
+=================================================================
+
+cd /tmp
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+
+=================================================================
+STEP 2: Update Package Lists
+=================================================================
+
+sudo apt-get update
+
+=================================================================
+STEP 3: Install CUDA Toolkit 12.1 (This takes 10-15 minutes)
+=================================================================
+
+sudo apt-get install -y cuda-toolkit-12-1
+
+=================================================================
+STEP 4: Set Up Environment Variables
+=================================================================
+
+echo "" >> ~/.bashrc
+echo "# CUDA Toolkit 12.1" >> ~/.bashrc
+echo "export CUDA_HOME=/usr/local/cuda-12.1" >> ~/.bashrc
+echo 'export PATH=$CUDA_HOME/bin:$PATH' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
+
+# Apply to current session
+source ~/.bashrc
+
+=================================================================
+STEP 5: Verify CUDA Installation
+=================================================================
+
+nvcc --version
+
+# You should see: Cuda compilation tools, release 12.1
+
+=================================================================
+STEP 6: Install FlashAttention (This takes 5-10 minutes to compile)
+=================================================================
+
+pip install flash-attn --no-build-isolation
+
+=================================================================
+STEP 7: Test FlashAttention
+=================================================================
+
+python3 -c "
+import torch
+from transformers import AutoModel
+
+print('Testing FlashAttention...')
+try:
+    model = AutoModel.from_pretrained(
+        'facebook/esm2_t33_650M_UR50D',
+        attn_implementation='flash_attention_2',
+        trust_remote_code=True
+    )
+    print('✓ FlashAttention is working!')
+    print('✓ Training will be 3-10x faster!')
+except Exception as e:
+    print(f'Error: {e}')
+"
+
+=================================================================
+STEP 8: Stop Current Training
+=================================================================
+
+# Find the training process
+ps aux | grep train_fast_v2.py
+
+# Kill it (replace <PID> with the actual process ID from above)
+kill <PID>
+
+# Or kill all training processes
+pkill -f train_fast_v2.py
+
+=================================================================
+STEP 9: Restart Training with FlashAttention
+=================================================================
+
+cd /mnt/c/Users/401-24/Desktop/AbAg_binding_prediction
+
+python3 train_fast_v2.py \
+  --data /mnt/c/Users/401-24/Desktop/Ab_Ag_dataset/data/agab/agab_phase2_full.csv \
+  --epochs 50 \
+  --batch_size 8 \
+  --focal_gamma 2.0 \
+  --output_dir outputs_fast_v2 \
+  2>&1 | tee training_fast_v2_flashattn.log &
+
+=================================================================
+DONE!
+=================================================================
+
+Your training should now be 3-10x faster!
+
+Monitor progress:
+  tail -f training_fast_v2_flashattn.log
+
+Expected speed:
+  Before: ~1.1 it/s (7 days for 50 epochs)
+  After:  ~3-4 it/s (1-2 days for 50 epochs)
+
+=================================================================

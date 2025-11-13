@@ -18,8 +18,20 @@ logger = logging.getLogger(__name__)
 class MultiHeadAttentionModel(nn.Module):
     """Multi-head attention model for binding affinity prediction"""
 
-    def __init__(self, input_dim=300, hidden_dim=256, n_heads=8, dropout=0.1):
+    def __init__(self, input_dim=256, hidden_dim=256, n_heads=8, dropout=0.1):
+        """
+        Args:
+            input_dim: Input feature dimension (must be divisible by n_heads)
+            hidden_dim: Hidden layer dimension
+            n_heads: Number of attention heads (input_dim must be divisible by this)
+            dropout: Dropout rate
+        """
         super().__init__()
+
+        # Validate that input_dim is divisible by n_heads
+        if input_dim % n_heads != 0:
+            raise ValueError(f"input_dim ({input_dim}) must be divisible by n_heads ({n_heads})")
+
         self.attention = nn.MultiheadAttention(
             embed_dim=input_dim,
             num_heads=n_heads,
@@ -115,7 +127,9 @@ class AffinityPredictor:
 
     def _load_model(self) -> nn.Module:
         """Load the trained model"""
-        model = MultiHeadAttentionModel(input_dim=300, hidden_dim=256, n_heads=8)
+        # Use 256-dim input (128 per sequence) to match n_heads=8 requirement
+        # 256 is divisible by 8, fixing the dimension mismatch error
+        model = MultiHeadAttentionModel(input_dim=256, hidden_dim=256, n_heads=8)
         checkpoint = torch.load(self.model_path, map_location=self.device)
 
         if 'model_state_dict' in checkpoint:
@@ -224,11 +238,12 @@ class AffinityPredictor:
         ab_emb = self._get_embedding(antibody_seq)
         ag_emb = self._get_embedding(antigen)
 
-        # Reduce to 150 dims each (model input)
-        ab_features = ab_emb[:150]
-        ag_features = ag_emb[:150]
+        # Reduce to 128 dims each for 256 total (divisible by n_heads=8)
+        # This fixes the dimension mismatch error
+        ab_features = ab_emb[:128]
+        ag_features = ag_emb[:128]
 
-        # Combine and predict
+        # Combine and predict (128 + 128 = 256 dims)
         features = np.concatenate([ab_features, ag_features])
         x = torch.tensor(features, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(self.device)
 

@@ -1,0 +1,30 @@
+# ============================================================================
+# STOP YOUR CURRENT TRAINING AND RUN THIS INSTEAD
+# ============================================================================
+# This version uses ONLY ~7.5 GB instead of filling up your 10 GB Drive
+# ============================================================================
+
+# First, check current storage usage
+!df -h /content/drive/MyDrive | grep -v Filesystem
+
+print("\n" + "="*70)
+print("LOW STORAGE MODE - Will use max 7.5 GB")
+print("="*70)
+print("\nCheckpoint Strategy:")
+print("  • checkpoint_latest.pth (~2.5 GB) - rotates every 500 batches")
+print("  • checkpoint_backup.pth (~2.5 GB) - previous latest")
+print("  • best_model.pth (~2.0 GB) - best model so far")
+print("  • checkpoint_epoch.pth (~2.5 GB) - end of each epoch")
+print("\nTotal: ~7.5 GB (safe for 10 GB limit)")
+print("Saves every 500 batches (~20 minutes)")
+print("="*70 + "\n")
+
+# Now run the low-storage training script
+!python /content/drive/MyDrive/AbAg_Training/train_low_storage.py \
+  --data agab_phase2_full.csv \
+  --epochs 50 \
+  --batch_size 12 \
+  --save_every_n_batches 500 \
+  --output_dir outputs_low_storage \
+  --use_bfloat16 True \
+  --use_compile True

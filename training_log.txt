@@ -1,0 +1,10 @@
+/home/kroea/.local/lib/python3.10/site-packages/transformers/utils/generic.py:441: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  _torch_pytree._register_pytree_node(
+usage: train_optimized_v1.py [-h] --data DATA [--output_dir OUTPUT_DIR]
+                             [--max_length MAX_LENGTH] [--dropout DROPOUT]
+                             [--epochs EPOCHS] [--batch_size BATCH_SIZE]
+                             [--lr LR] [--weight_decay WEIGHT_DECAY]
+                             [--focal_gamma FOCAL_GAMMA]
+                             [--use_stratified_sampling]
+                             [--num_workers NUM_WORKERS]
+train_optimized_v1.py: error: unrecognized arguments:       
