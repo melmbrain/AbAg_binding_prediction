@@ -5,39 +5,66 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
 
-**Status**: ✅ v2.6.0-beta Available
-**Architecture**: IgT5 (antibody) + ESM-2 (antigen)
+**Current Version**: v2.6.0-beta (2025-11-25)
+**Status**: ⚠️ Experimental Release - v2.7 in development
+**Architecture**: IgT5 (antibody) + ESM-2 3B (antigen) with Cross-Attention
 
 ---
 
-## 📦 Pre-trained Models
+## 📦 Releases
 
-Models are hosted on **Hugging Face Hub**: [Kroea/AbAg-binding-prediction](https://huggingface.co/Kroea/AbAg-binding-prediction)
+### v2.6.0-beta (2025-11-25) - Current
 
-| Model | Size | Architecture | Performance | Status |
-|-------|------|--------------|-------------|--------|
-| `best_model_v2.5_esm2_650m.pth` | 4.7GB | IgT5 + ESM-2 650M | Stable | ✅ Recommended |
-| `best_model_v2.6_beta_esm2_3b.pth` | 16GB | IgT5 + ESM-2 3B | Spearman: 0.37 | ⚠️ Experimental |
+**Status**: ⚠️ Experimental (known stability issues - not for production)
 
-### Download Models
+- **Model**: IgT5 + ESM-2 3B with cross-attention
+- **Performance**:
+  - Spearman ρ: 0.390
+  - RMSE: 2.10
+  - Recall@pKd≥9: 100%
+- **Training**: 15 epochs on A100 80GB (~60 hours)
+- **Known Issues**:
+  - Recall instability (oscillates 18% ↔ 100%)
+  - Invalid predictions (negative pKd values)
+  - See [v2.6/README_v2.6.md](v2.6/README_v2.6.md) for details
+- **Download**: [GitHub Release](https://github.com/melmbrain/AbAg_binding_prediction/releases/tag/v2.6.0-beta) | Model Card: [README_v2.6.md](v2.6/README_v2.6.md)
+
+### v2.5.0 (2025-11-13) - Previous Stable
+
+- **Model**: ESM-2 650M
+- **Performance**: Spearman 0.42, RMSE 1.95
+- **Status**: ✅ Stable (use for production)
+- **Download**: See [CHANGELOG.md](CHANGELOG.md#250---2025-11-13)
+
+### v2.7.0 (In Development) - Next
+
+**Expected**: 2025-12-01
+
+- **Fixes**: Stable MSE loss, prediction clamping, NaN detection, complete RNG state
+- **Expected Performance**: Spearman 0.45-0.55, stable recall 50-70%
+- **Roadmap**: [V2.7_IMPROVEMENTS.md](V2.7_IMPROVEMENTS.md)
+
+### Pre-trained Models (Hugging Face)
+
+Models hosted at: [Kroea/AbAg-binding-prediction](https://huggingface.co/Kroea/AbAg-binding-prediction)
 
 ```python
 from huggingface_hub import hf_hub_download
 
-# Download v2.5 (recommended)
-model_path = hf_hub_download(
-    repo_id="Kroea/AbAg-binding-prediction",
-    filename="best_model_v2.5_esm2_650m.pth"
-)
-
-# Or download v2.6-beta (experimental)
+# Download v2.6-beta (experimental - 16GB)
 model_path = hf_hub_download(
     repo_id="Kroea/AbAg-binding-prediction",
     filename="best_model_v2.6_beta_esm2_3b.pth"
 )
+
+# Or use v2.5 (stable - 4.7GB)
+model_path = hf_hub_download(
+    repo_id="Kroea/AbAg-binding-prediction",
+    filename="best_model_v2.5_esm2_650m.pth"
+)
 ```
 
-> ⚠️ **Note**: v2.6.0-beta has known issues (model collapse, early training stop). Use v2.5 for production. See [CHANGELOG.md](CHANGELOG.md) for details.
+> ⚠️ **Important**: v2.6.0-beta has documented stability issues (recall oscillation, invalid predictions). For production, use v2.5 or wait for v2.7 stable release.
 
 ---
 

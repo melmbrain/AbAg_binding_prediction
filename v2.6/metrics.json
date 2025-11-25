@@ -1,0 +1,31 @@
+{
+  "test": {
+    "rmse": 2.102529423855926,
+    "mae": 1.673326849937439,
+    "r2": -0.0022968053817749023,
+    "spearman": 0.39456053388163953,
+    "pearson": 0.6963708400726318,
+    "recall": 99.96333414813004,
+    "precision": 35.76926441004111
+  },
+  "val": {
+    "rmse": 2.101069509548377,
+    "mae": 1.6706877946853638,
+    "r2": 0.0035200119018554688,
+    "spearman": 0.39026870782697404,
+    "pearson": 0.6975371241569519,
+    "recall": 100.0,
+    "precision": 35.83428121445446
+  },
+  "hyperparameters": {
+    "batch_size": 32,
+    "learning_rate": 0.0005,
+    "dropout": 0.3,
+    "huber_weight": 0.5,
+    "spearman_weight": 0.4,
+    "class_weight": 0.1,
+    "use_cross_attention": true,
+    "warmup_epochs": 5,
+    "epochs": 50
+  }
+}

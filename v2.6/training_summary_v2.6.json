@@ -1,0 +1,11 @@
+{
+  "total_epochs": 15,
+  "best_spearman": 0.39026870782697404,
+  "best_spearman_epoch": 12,
+  "best_recall": 100.0,
+  "lowest_loss": 0.40898816382595055,
+  "recall_std": 39.35001416511261,
+  "max_recall_jump": 85.64277865950433,
+  "current_lr": 2.0062997658855582e-05,
+  "status": "unstable"
+}
