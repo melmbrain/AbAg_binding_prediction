@@ -1,0 +1,34 @@
+# Files Archived - CUDA Graphs Fix Experiments (2025-01-14)
+
+## Python Scripts (Experimental)
+- COLAB_TRAINING_FIXED.py
+- COLAB_SINGLE_CELL_COMPLETE.py
+- EMERGENCY_FIX.py
+- train_ultra_speed_v26_COLAB_FIXED.py
+
+## Documentation (Experimental)
+- COLAB_FIXES_APPLIED.md
+- COLAB_NOTEBOOK_QUICK_GUIDE.md
+- CUDA_GRAPHS_FIX_COMPLETE.md
+- FINAL_FIX_APPLIED.md
+- TROUBLESHOOTING_CUDA_GRAPHS.md
+- V26_IMPLEMENTATION_COMPLETE.md
+- SIMPLE_COLAB_INSTRUCTIONS.md
+- SIMPLE_SETUP.md
+- ADVANCED_OPTIMIZATIONS_V26.md
+- TRAINING_SPEEDUP_STRATEGY.md
+
+## Configuration Files (Experimental)
+- SAFE_CONFIG.txt
+- SWITCH_TO_V26_NOW.txt
+- COLAB_TRAINING_FIX.txt
+- COLAB_SINGLE_CELL_V26.txt
+
+## Status
+All files here are ARCHIVED and NOT USED.
+
+Working version is in parent directory:
+- /train_ultra_speed_v26.py (WORKING at 4.45 it/s)
+- /WORKING_CONFIG.md
+- /README.md
+- /START_HERE.md

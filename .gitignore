@@ -4,8 +4,10 @@ external_data/
 *.npy
 *.pkl
 
-# Model files (too large for GitHub)
-models/*.pth
+# Model files (too large for GitHub - use Releases or HuggingFace)
+*.pth
+models/**/*.pth
+v2.6/*.pth
 !models/.gitkeep
 
 # Results

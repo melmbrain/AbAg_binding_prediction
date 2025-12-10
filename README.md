@@ -1,278 +1,250 @@
-# Antibody-Antigen Binding Prediction (IgT5 + ESM-2)
+# Antibody-Antigen Binding Affinity Prediction
 
-**Deep learning model for predicting antibody-antigen binding affinity using dual protein language models.**
+**Deep learning model for predicting antibody-antigen binding affinity (pKd) using dual protein language models.**
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
 
-**Current Version**: v2.6.0-beta (2025-11-25)
-**Status**: ⚠️ Experimental Release - v2.7 in development
-**Architecture**: IgT5 (antibody) + ESM-2 3B (antigen) with Cross-Attention
+**Current Version**: v2.8.0 (2025-12-10)
+**Status**: Production Ready
+**Architecture**: IgT5 (antibody) + ProtT5 (antigen) with Cross-Attention Fusion
 
 ---
 
-## 📦 Releases
+## Performance
 
-### v2.6.0-beta (2025-11-25) - Current
+| Model | Val R² | Val MAE | Architecture |
+|-------|--------|---------|--------------|
+| **v2.8 (Stage 2)** | **0.7865** | **0.4254** | Cross-attention + ResidualMLP |
+| v2.8 (Stage 1) | 0.7220 | 0.5500 | IgT5 + ProtT5 with LoRA |
+| v2.6-beta | 0.390 (ρ) | - | IgT5 + ESM-2 3B |
+| v2.5 | 0.42 (ρ) | - | ESM-2 650M |
 
-**Status**: ⚠️ Experimental (known stability issues - not for production)
+---
 
-- **Model**: IgT5 + ESM-2 3B with cross-attention
-- **Performance**:
-  - Spearman ρ: 0.390
-  - RMSE: 2.10
-  - Recall@pKd≥9: 100%
-- **Training**: 15 epochs on A100 80GB (~60 hours)
-- **Known Issues**:
-  - Recall instability (oscillates 18% ↔ 100%)
-  - Invalid predictions (negative pKd values)
-  - See [v2.6/README_v2.6.md](v2.6/README_v2.6.md) for details
-- **Download**: [GitHub Release](https://github.com/melmbrain/AbAg_binding_prediction/releases/tag/v2.6.0-beta) | Model Card: [README_v2.6.md](v2.6/README_v2.6.md)
+## Quick Start
 
-### v2.5.0 (2025-11-13) - Previous Stable
+### Option 1: Python Inference
 
-- **Model**: ESM-2 650M
-- **Performance**: Spearman 0.42, RMSE 1.95
-- **Status**: ✅ Stable (use for production)
-- **Download**: See [CHANGELOG.md](CHANGELOG.md#250---2025-11-13)
+```python
+from inference import BindingAffinityPredictor
 
-### v2.7.0 (In Development) - Next
+# Load model
+predictor = BindingAffinityPredictor('models/v2.8_stage2/stage2_experiment_20251210_033341.pth')
 
-**Expected**: 2025-12-01
+# Predict binding affinity
+pKd = predictor.predict_from_sequences(
+    antibody_seq="EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVS...",
+    antigen_seq="MKTIIALSYIFCLVFADYKDDDDK..."
+)
 
-- **Fixes**: Stable MSE loss, prediction clamping, NaN detection, complete RNG state
-- **Expected Performance**: Spearman 0.45-0.55, stable recall 50-70%
-- **Roadmap**: [V2.7_IMPROVEMENTS.md](V2.7_IMPROVEMENTS.md)
+print(f"Predicted pKd: {pKd:.2f}")
+print(f"Predicted Kd: {10**(9-pKd):.2f} nM")
+```
 
-### Pre-trained Models (Hugging Face)
+### Option 2: Command Line
 
-Models hosted at: [Kroea/AbAg-binding-prediction](https://huggingface.co/Kroea/AbAg-binding-prediction)
+```bash
+# Single prediction
+python inference.py --antibody "EVQLVESGGGL..." --antigen "MKTIIALSYIF..."
+
+# Batch prediction from CSV
+python inference.py --csv input.csv --output predictions.csv
+```
+
+### Option 3: Web API
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start API server
+python api.py
+
+# Open http://localhost:8000 in browser
+```
+
+---
+
+## Installation
+
+```bash
+# Clone repository
+git clone https://github.com/melmbrain/AbAg_binding_prediction.git
+cd AbAg_binding_prediction
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Download model (or use your own trained model)
+# Place model file in models/v2.8_stage2/
+```
+
+---
+
+## Model Architecture
+
+```
+Input: Antibody Sequence + Antigen Sequence
+           ↓                    ↓
+    ┌─────────────┐      ┌─────────────┐
+    │    IgT5     │      │   ProtT5    │
+    │  (frozen)   │      │  (frozen)   │
+    │  + LoRA     │      │  + LoRA     │
+    └─────────────┘      └─────────────┘
+           ↓                    ↓
+      [1024-dim]           [1024-dim]
+           ↓                    ↓
+    ┌─────────────────────────────────┐
+    │    Cross-Attention Fusion       │
+    │  - Ab→Ag + Ag→Ab attention      │
+    │  - 8 heads, 512-dim             │
+    └─────────────────────────────────┘
+                    ↓
+    ┌─────────────────────────────────┐
+    │      Residual MLP Head          │
+    │  512 → 256 → 128 → 1            │
+    │  BatchNorm + GELU + Dropout     │
+    └─────────────────────────────────┘
+                    ↓
+            Output: pKd
+```
+
+---
+
+## Training (Google Colab)
+
+### Two-Stage Training Pipeline
+
+**Stage 1: Fine-tune Encoders & Generate Embeddings**
+```
+notebooks/Stage1_Generate_Embeddings.ipynb
+- Fine-tune IgT5 + ProtT5 with LoRA
+- Generate and cache embeddings for all samples
+- ~20 hours on A100 40GB
+```
+
+**Stage 2: Train Fusion Model**
+```
+notebooks/Stage2_Fast_Training.ipynb
+- Load cached embeddings (instant)
+- Train fusion + head model
+- ~1 hour on A100 40GB
+```
+
+### Setup for Colab
+
+1. Create folder structure in Google Drive:
+```
+MyDrive/AbAg_Project/
+├── data/
+│   └── ab_ag_affinity_complete.csv
+├── embeddings/
+├── checkpoints/
+└── models/
+```
+
+2. Upload dataset to `data/`
+
+3. Run Stage 1 notebook, then Stage 2
+
+---
+
+## pKd Interpretation
+
+| pKd Range | Binding Strength | Kd (approx) |
+|-----------|------------------|-------------|
+| ≥ 9 | Very Strong | < 1 nM |
+| 7-9 | Strong | 1-100 nM |
+| 5-7 | Moderate | 0.1-10 µM |
+| < 5 | Weak | > 10 µM |
+
+---
+
+## Project Structure
+
+```
+AbAg_binding_prediction/
+├── inference.py              # Inference script
+├── api.py                    # FastAPI web server
+├── requirements.txt          # Dependencies
+├── README.md                 # This file
+├── models/
+│   ├── v2.8_stage2/          # Latest model
+│   │   ├── *.pth             # Model weights
+│   │   └── README.md         # Model card
+│   └── backup/
+├── notebooks/
+│   ├── Stage1_Generate_Embeddings.ipynb
+│   ├── Stage2_Fast_Training.ipynb
+│   └── ...
+├── data/
+│   └── ab_ag_affinity_complete.csv
+├── src/
+│   └── ...
+└── archive/
+    └── ...
+```
+
+---
+
+## API Documentation
+
+Once the API is running, visit:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Web UI |
+| GET | `/health` | Health check |
+| GET | `/model-info` | Model information |
+| POST | `/predict` | Single prediction |
+| POST | `/predict/batch` | Batch prediction (max 100) |
+
+---
+
+## Pre-trained Models
+
+Download from [Hugging Face](https://huggingface.co/Kroea/AbAg-binding-prediction):
 
 ```python
 from huggingface_hub import hf_hub_download
 
-# Download v2.6-beta (experimental - 16GB)
+# v2.8 Stage 2 model (recommended)
 model_path = hf_hub_download(
     repo_id="Kroea/AbAg-binding-prediction",
-    filename="best_model_v2.6_beta_esm2_3b.pth"
-)
-
-# Or use v2.5 (stable - 4.7GB)
-model_path = hf_hub_download(
-    repo_id="Kroea/AbAg-binding-prediction",
-    filename="best_model_v2.5_esm2_650m.pth"
+    filename="stage2_final.pth"
 )
 ```
 
-> ⚠️ **Important**: v2.6.0-beta has documented stability issues (recall oscillation, invalid predictions). For production, use v2.5 or wait for v2.7 stable release.
-
 ---
 
-## 🚀 Quick Start (Google Colab)
+## Citation
 
-### 1. Upload to Google Drive
-Place these files in `/MyDrive/AbAg_Training/`:
-- `train_ultra_speed_v26.py`
-- `agab_phase2_full.csv`
-
-### 2. Run in Colab
-```python
-# Cell 1: Setup
-from google.colab import drive
-drive.mount('/content/drive')
-import os
-os.chdir('/content/drive/MyDrive/AbAg_Training')
-
-# Cell 2: Install
-!pip install -q transformers pandas scipy scikit-learn tqdm sentencepiece faesm bitsandbytes accelerate
-
-# Cell 3: Train
-!python train_ultra_speed_v26.py
-```
-
-**That's it!** Auto-resumes from checkpoints.
-
----
-
-## 📊 Performance
-
-- **Speed**: 4.45 iterations/second (confirmed working)
-- **Time per epoch**: ~26 minutes
-- **50 epochs**: ~21-22 hours total
-- **Speedup**: ~5.5× faster than original baseline
-- **Memory**: ~12GB GPU (T4/V100/A100)
-
----
-
-## 🔧 Active Optimizations (17/19)
-
-✅ **Batch embedding generation** - 2-3× faster (biggest win!)
-✅ **Sequence bucketing** - 1.3-1.5× faster
-✅ **INT8 quantization** - Encoders only
-✅ **Activation checkpointing** - Enables batch 16
-✅ **BFloat16 mixed precision**
-✅ **FlashAttention** - If FAESM available
-✅ **Fused AdamW optimizer**
-✅ **Gradient accumulation** (×3)
-✅ **DataLoader prefetching** (4 workers)
-✅ **Async checkpoint saving**
-✅ **TF32 precision** (A100)
-✅ **Cudnn benchmark mode**
-✅ **Fast tokenizers**
-✅ **Disk auto-cleanup**
-❌ **torch.compile** - DISABLED (prevents CUDA graphs errors)
-
----
-
-## 📁 Important Files
-
-| File | Purpose |
-|------|---------|
-| `train_ultra_speed_v26.py` | ✅ **Main training script (WORKING)** |
-| `WORKING_CONFIG.md` | Config documentation (4.45 it/s) |
-| `notebooks/colab_training_SIMPLE.ipynb` | Simple Colab notebook |
-| `archive/experimental_cuda_fix_2025-01-14/` | Old experimental files |
-
----
-
-## 🔬 Model Architecture
-
-```
-Input: Antibody sequence + Antigen sequence
-  ↓
-IgT5 Encoder (frozen)  →  Mean pooling  →  [1280-dim]
-ESM-2 Encoder (frozen) →  CLS token    →  [1280-dim]
-  ↓
-Concatenate [2560-dim]
-  ↓
-Regressor: 1024 → 512 → 256 → 128 → 1
-  ↓
-Output: pKd prediction
-```
-
-**Loss**: Focal MSE (gamma=2.0)
-**Optimizer**: AdamW (fused, lr=4e-3, weight_decay=0.01)
-
----
-
-## 💾 Storage & Checkpoints
-
-**Auto-saved files**:
-- `checkpoint_latest.pth` - Latest state (auto-resume)
-- `checkpoint_backup.pth` - Previous checkpoint
-- `best_model.pth` - Best validation Spearman
-- `checkpoint_epoch.pth` - End of epoch
-
-**Disk management**:
-- Auto cleanup every epoch
-- Ultra-aggressive cleanup at 150GB
-- Max 4 checkpoint files (~7.5GB total)
-
----
-
-## ⚙️ Configuration (Working Settings)
-
-**DO NOT CHANGE - This config is proven stable!**
-
-```python
-# Training
-batch_size = 16
-accumulation_steps = 3
-epochs = 50
-learning_rate = 4e-3
-
-# Optimizations
-use_compile = False          # ❌ DISABLED (prevents CUDA graphs errors)
-use_checkpointing = True     # ✅ ENABLED (saves memory)
-use_quantization = True      # ✅ ENABLED (INT8 for encoders)
-use_bucketing = True         # ✅ ENABLED (efficient batching)
-use_bfloat16 = True          # ✅ ENABLED (mixed precision)
-use_fused_optimizer = True   # ✅ ENABLED (faster optimizer)
-```
-
----
-
-## 🐛 Troubleshooting
-
-### CUDA Graphs Error
-**Fixed!** Current `train_ultra_speed_v26.py` has nuclear fix (lines 28-43):
-- `torch.compiler.disable()` at import time
-- `use_compile=False` in config
-- No more crashes ✅
-
-### Out of Memory
-Current config uses batch 16 with checkpointing.
-If still OOM: Reduce to batch 12, accumulation 4
-
-### Disk Space Full
-Auto-cleanup triggers at 150GB.
-Manual cleanup: See `WORKING_CONFIG.md`
-
----
-
-## 📈 Expected Results
-
-- **Validation Spearman**: ~0.7-0.8
-- **Recall@pKd≥9**: ~70-80%
-- **Training time**: ~21-22 hours
-- **Model size**: ~2.6GB
-
----
-
-## 📚 Documentation
-
-- `WORKING_CONFIG.md` - Detailed working config docs
-- `START_HERE.md` - Getting started guide (if exists)
-- `archive/experimental_cuda_fix_2025-01-14/` - Old experimental docs
-
----
-
-## 📁 Project Structure
-
-```
-AbAg_binding_prediction/
-├── train_ultra_speed_v26.py          # Main script ✅
-├── WORKING_CONFIG.md                  # Config docs
-├── README.md                          # This file
-├── data/
-│   └── agab_phase2_full.csv          # Dataset (159k samples)
-├── notebooks/
-│   ├── colab_training_SIMPLE.ipynb
-│   └── colab_training_ULTRA_SPEED_v26.ipynb
-├── src/
-│   └── model_v3_full_dim.py          # Model source
-├── outputs_max_speed/                 # Checkpoints
-└── archive/
-    └── experimental_cuda_fix_2025-01-14/  # Old experiments
-```
-
----
-
-## 📝 Citation
-
-If you use this code:
+If you use this code, please cite:
 - **IgT5**: [Exscientia/IgT5](https://huggingface.co/Exscientia/IgT5)
-- **ESM-2**: [facebook/esm2_t33_650M_UR50D](https://huggingface.co/facebook/esm2_t33_650M_UR50D)
+- **ProtT5**: [Rostlab/prot_t5_xl_half_uniref50-enc](https://huggingface.co/Rostlab/prot_t5_xl_half_uniref50-enc)
 
 ---
 
-## ⚠️ Critical Notes
+## Version History
 
-1. **Current `train_ultra_speed_v26.py` is WORKING** at 4.45 it/s
-2. **Do not modify config** unless you understand CUDA graphs issue
-3. **All experiments archived** in `archive/experimental_cuda_fix_2025-01-14/`
-4. **Nuclear fix applied** - torch.compile disabled globally
-
----
-
-## 🚀 Version History
-
-- **v2.6** (Current) - ✅ Stable, 17/19 optimizations, 4.45 it/s, no errors
-- v2.5 - ❌ CUDA graphs errors with torch.compile + checkpointing
-- v2.0 - Initial optimized version
-- v1.0 - Baseline implementation
+| Version | Date | R² | Notes |
+|---------|------|-----|-------|
+| **v2.8** | 2025-12-10 | **0.7865** | Two-stage pipeline, cross-attention fusion |
+| v2.6-beta | 2025-11-25 | 0.39 (ρ) | ESM-2 3B experimental |
+| v2.5 | 2025-11-13 | 0.42 (ρ) | ESM-2 650M stable |
 
 ---
 
-**Last Updated**: 2025-01-14
-**Status**: ✅ WORKING - 4.45 it/s, no CUDA graphs errors
+## License
+
+MIT License
+
+---
+
+**Last Updated**: 2025-12-10
+**Status**: Production Ready

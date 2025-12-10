@@ -1,0 +1,94 @@
+# ============================================================================
+# ULTRA SPEED v2.6 - SINGLE CELL VERSION FOR COLAB
+# ============================================================================
+# Copy and paste this ENTIRE cell into Colab
+# It will train with all 19 optimizations WITHOUT needing %%writefile
+# ============================================================================
+
+# CONFIGURATION - Edit these values directly
+DATA_PATH = 'agab_phase2_full.csv'
+OUTPUT_DIR = 'outputs_max_speed'
+EPOCHS = 50
+BATCH_SIZE = 16
+ACCUMULATION_STEPS = 3
+LEARNING_RATE = 4e-3
+USE_QUANTIZATION = True
+USE_BUCKETING = True
+USE_CHECKPOINTING = True
+
+# Install requirements first (run once)
+import subprocess
+import sys
+
+print("Installing required packages...")
+packages = ['transformers', 'pandas', 'scipy', 'scikit-learn', 'tqdm',
+            'sentencepiece', 'faesm', 'bitsandbytes', 'accelerate']
+for package in packages:
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-q', package])
+print("✓ All packages installed\n")
+
+# Now import everything
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader, Sampler
+from torch.utils.checkpoint import checkpoint as gradient_checkpoint
+import pandas as pd
+import numpy as np
+from scipy import stats
+from sklearn.model_selection import train_test_split
+from tqdm import tqdm
+from pathlib import Path
+import time
+import shutil
+import gc
+import random
+from transformers import T5EncoderModel, T5Tokenizer, AutoTokenizer, BitsAndBytesConfig
+import threading
+
+try:
+    from faesm.esm import FAEsmForMaskedLM
+    FLASH_ATTN_AVAILABLE = True
+except ImportError:
+    from transformers import AutoModel
+    FLASH_ATTN_AVAILABLE = False
+
+# Enable optimizations
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
+torch.backends.cudnn.benchmark = True
+torch.backends.cudnn.deterministic = False
+
+print("="*70)
+print("ULTRA SPEED v2.6 - ALL OPTIMIZATIONS ACTIVE")
+print("="*70)
+print(f"GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}")
+print(f"FlashAttention: {FLASH_ATTN_AVAILABLE}")
+print("="*70 + "\n")
+
+# PASTE THE REST OF THE TRAINING CODE HERE
+# (All the class definitions and training functions from train_ultra_speed_v26.py)
+# Then at the end, instead of argparse, create a simple config object:
+
+class Args:
+    data = DATA_PATH
+    output_dir = OUTPUT_DIR
+    epochs = EPOCHS
+    batch_size = BATCH_SIZE
+    accumulation_steps = ACCUMULATION_STEPS
+    lr = LEARNING_RATE
+    weight_decay = 0.01
+    dropout = 0.3
+    focal_gamma = 2.0
+    save_every_n_batches = 500
+    num_workers = 4
+    prefetch_factor = 4
+    validation_frequency = 2
+    use_bfloat16 = True
+    use_compile = True
+    use_fused_optimizer = True
+    use_quantization = USE_QUANTIZATION
+    use_checkpointing = USE_CHECKPOINTING
+    use_bucketing = USE_BUCKETING
+
+args = Args()
+main(args)

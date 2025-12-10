@@ -1,0 +1,149 @@
+# URGENT FIX FOR KeyError: 'antibody_seqs'
+# ============================================================================
+# The DataLoader needs the collate_fn parameter!
+# ============================================================================
+
+In your Colab notebook, find the DataLoader creation (around line 360-380 in the script).
+
+CURRENT CODE (BROKEN):
+```python
+train_loader = DataLoader(
+    train_dataset,
+    batch_size=args.batch_size,
+    shuffle=True,
+    num_workers=args.num_workers,
+    prefetch_factor=args.prefetch_factor,
+    pin_memory=True,
+    persistent_workers=True,
+    drop_last=True
+)
+val_loader = DataLoader(
+    val_dataset,
+    batch_size=args.batch_size,
+    shuffle=False,
+    num_workers=args.num_workers,
+    prefetch_factor=args.prefetch_factor,
+    pin_memory=True,
+    persistent_workers=True
+)
+```
+
+FIXED CODE (ADD collate_fn=collate_fn):
+```python
+train_loader = DataLoader(
+    train_dataset,
+    batch_size=args.batch_size,
+    shuffle=True,
+    num_workers=args.num_workers,
+    prefetch_factor=args.prefetch_factor,
+    pin_memory=True,
+    persistent_workers=True,
+    drop_last=True,
+    collate_fn=collate_fn  # ← ADD THIS LINE
+)
+val_loader = DataLoader(
+    val_dataset,
+    batch_size=args.batch_size,
+    shuffle=False,
+    num_workers=args.num_workers,
+    prefetch_factor=args.prefetch_factor,
+    pin_memory=True,
+    persistent_workers=True,
+    collate_fn=collate_fn  # ← ADD THIS LINE
+)
+```
+
+# HOW TO FIX IN COLAB:
+
+Option 1 - Quick Fix (Recommended):
+1. Stop the current training (Runtime → Interrupt execution)
+2. Scroll to the cell that creates train_maximum_speed.py (Cell with %%writefile)
+3. Find the two DataLoader sections (~line 360 and ~line 370)
+4. Add `collate_fn=collate_fn,` to both DataLoaders
+5. Run the cell again to overwrite the file
+6. Re-run the training cell
+
+Option 2 - Edit File Directly:
+1. In Colab, run this to edit the file:
+```python
+# Read the file
+with open('train_maximum_speed.py', 'r') as f:
+    content = f.read()
+
+# Fix train_loader
+content = content.replace(
+    """train_loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+        prefetch_factor=args.prefetch_factor,  # NEW
+        pin_memory=True,
+        persistent_workers=True,
+        drop_last=True  # Avoid small final batch
+    )""",
+    """train_loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+        prefetch_factor=args.prefetch_factor,  # NEW
+        pin_memory=True,
+        persistent_workers=True,
+        drop_last=True,  # Avoid small final batch
+        collate_fn=collate_fn  # FIX: Add collate function
+    )"""
+)
+
+# Fix val_loader
+content = content.replace(
+    """val_loader = DataLoader(
+        val_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+        prefetch_factor=args.prefetch_factor,
+        pin_memory=True,
+        persistent_workers=True
+    )""",
+    """val_loader = DataLoader(
+        val_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+        prefetch_factor=args.prefetch_factor,
+        pin_memory=True,
+        persistent_workers=True,
+        collate_fn=collate_fn  # FIX: Add collate function
+    )"""
+)
+
+# Write back
+with open('train_maximum_speed.py', 'w') as f:
+    f.write(content)
+
+print("✓ Fixed! Now restart training.")
+```
+
+2. Then re-run the training cell
+
+# WHY THIS HAPPENED:
+
+The `collate_fn` function was defined but not passed to DataLoader.
+Without it, DataLoader returns default dict keys from __getitem__:
+- 'antibody_sequence', 'antigen_sequence', 'pKd'
+
+But the training code expects:
+- 'antibody_seqs', 'antigen_seqs', 'pKd'
+
+The collate_fn transforms the keys and creates lists of sequences.
+
+# VERIFICATION:
+
+After fixing, you should see training start successfully with:
+```
+Epoch 1/50
+Epoch 1:   0% 0/9317 [00:00<?, ?it/s]
+[Compiling model... this takes 2-3 minutes on first 100-200 batches]
+Epoch 1:   1% 50/9317 [00:15<45:23, 3.40it/s, loss=1.2e+01, batch=50/9317]
+```
